@@ -5,6 +5,21 @@ export interface User {
     name: string;
     email: string;
     email_verified_at?: string;
+    permissions: string[];
+    roles: string[];
+}
+
+export type PaginatedDAta <T = any> ={
+    data: T[];
+    links: Record<string, string>
+}
+
+export type Feature = {
+    id:number;
+    name:string;
+    description:string;
+    user:User;
+    created_At: string;
 }
 
 export type PageProps<
