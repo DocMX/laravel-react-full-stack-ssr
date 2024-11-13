@@ -20,6 +20,9 @@ export type Feature = {
     description:string;
     user:User;
     created_At: string;
+    upvote_count: number;
+    user_has_upvoted : boolean;
+    user_has_downvoted : booleam;
 }
 
 export type PageProps<

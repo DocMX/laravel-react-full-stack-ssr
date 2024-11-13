@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\FeatureResource;
+use App\Http\Resources\FeatureListResource;
 use App\Models\Feature;
 use App\Models\Upvote;
 use Illuminate\Http\Request;
@@ -20,9 +21,25 @@ class FeatureController extends Controller
     public function index()
     {
         $currentUserId = Auth::id();
-        $paginated = Feature::latest()->paginate(10);
+
+        $paginated = Feature::latest()
+            ->withCount(['upvotes as upvote_count' => function ($query) {
+                $query->select(DB::raw('SUM(CASE WHEN upvote = true THEN 1 ELSE -1 END)'));
+            }])
+            ->withExists([
+                'upvotes as user_has_upvoted' => function ($query) use ($currentUserId) {
+                    $query->where('user_id', $currentUserId)
+                        ->where('upvote', true);
+                },
+                'upvotes as user_has_downvoted' => function ($query) use ($currentUserId) {
+                    $query->where('user_id', $currentUserId)
+                        ->where('upvote', false);
+                }
+            ])
+            ->paginate();
+
         return Inertia::render('Feature/Index', [
-            'features' => FeatureResource::collection($paginated)
+            'features' => FeatureListResource::collection($paginated)
         ]);
             
     }
@@ -76,6 +93,8 @@ class FeatureController extends Controller
      */
     public function update(Request $request, Feature $feature)
     {
+       
+
         $data = $request->validate([
             'name' => ['required', 'string'],
             'description' => ['nullable', 'string'],

@@ -3,6 +3,7 @@
 use App\Http\Controllers\FeatureController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
+use App\Http\Controllers\UpvoteController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -22,6 +23,11 @@ Route::middleware('auth')->group(function () {
         })->name('dashboard');
 
         Route::resource('feature', FeatureController::class);
+
+        Route::post('/feature/{feature}/upvote', [UpvoteController::class, 'store'])
+        ->name('upvote.store');
+        Route::delete('/upvote/{feature}', [UpvoteController::class, 'destroy'])
+        ->name('upvote.destroy');
         
     });
 });
