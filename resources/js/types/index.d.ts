@@ -7,9 +7,10 @@ export interface User {
     email_verified_at?: string;
     permissions: string[];
     roles: string[];
+    created_at: string;
 }
 
-export type PaginatedDAta <T = any> ={
+export type PaginatedData <T = any> ={
     data: T[];
     links: Record<string, string>
 }

@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
-
+use App\Enum\RolesEnum;
 class RegisteredUserController extends Controller
 {
     /**
@@ -41,7 +41,7 @@ class RegisteredUserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
-
+        $user->assignRole(RolesEnum::User->value);
         event(new Registered($user));
 
         Auth::login($user);

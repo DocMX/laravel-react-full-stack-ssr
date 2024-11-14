@@ -2,16 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\FeatureResource;
 use App\Http\Resources\FeatureListResource;
+use App\Http\Resources\FeatureResource;
+use App\Http\Resources\UserResource;
 use App\Models\Feature;
 use App\Models\Upvote;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-
+use Inertia\Inertia;
 
 class FeatureController extends Controller
 {
@@ -23,7 +22,6 @@ class FeatureController extends Controller
         $currentUserId = Auth::id();
 
         $paginated = Feature::latest()
-            ->whith(['comments.user'])
             ->withCount(['upvotes as upvote_count' => function ($query) {
                 $query->select(DB::raw('SUM(CASE WHEN upvote = true THEN 1 ELSE -1 END)'));
             }])
@@ -42,7 +40,6 @@ class FeatureController extends Controller
         return Inertia::render('Feature/Index', [
             'features' => FeatureListResource::collection($paginated)
         ]);
-            
     }
 
     /**
@@ -65,8 +62,8 @@ class FeatureController extends Controller
         $data['user_id'] = auth()->id();
 
         Feature::create($data);
-        
-        return to_route('feature.index')->with('success','Feature created succesfully.');
+
+        return to_route('feature.index')->with('success', 'Feature created successfully.');
     }
 
     /**
@@ -85,8 +82,19 @@ class FeatureController extends Controller
             ->where('user_id', Auth::id())
             ->where('upvote', false)
             ->exists();
+
         return Inertia::render('Feature/Show', [
-            'feature' => new FeatureResource($feature)
+            'feature' => new FeatureResource($feature),
+            'comments' => Inertia::defer(function() use ($feature) {
+                return $feature->comments->map(function ($comment) {
+                    return [
+                        'id' => $comment->id,
+                        'comment' => $comment->comment,
+                        'created_at' => $comment->created_at->format('Y-m-d H:i:s'),
+                        'user' => new UserResource($comment->user),
+                    ];
+                });
+            })
         ]);
     }
 
@@ -105,8 +113,6 @@ class FeatureController extends Controller
      */
     public function update(Request $request, Feature $feature)
     {
-       
-
         $data = $request->validate([
             'name' => ['required', 'string'],
             'description' => ['nullable', 'string'],
