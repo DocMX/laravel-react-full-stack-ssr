@@ -23,6 +23,7 @@ class FeatureController extends Controller
         $currentUserId = Auth::id();
 
         $paginated = Feature::latest()
+            ->whith(['comments.user'])
             ->withCount(['upvotes as upvote_count' => function ($query) {
                 $query->select(DB::raw('SUM(CASE WHEN upvote = true THEN 1 ELSE -1 END)'));
             }])
@@ -73,6 +74,17 @@ class FeatureController extends Controller
      */
     public function show(Feature $feature)
     {
+        $feature->upvote_count = Upvote::where('feature_id', $feature->id)
+            ->sum(DB::raw('CASE WHEN upvote = true THEN 1 ELSE -1 END'));
+
+        $feature->user_has_upvoted = Upvote::where('feature_id', $feature->id)
+            ->where('user_id', Auth::id())
+            ->where('upvote', true)
+            ->exists();
+        $feature->user_has_downvoted = Upvote::where('feature_id', $feature->id)
+            ->where('user_id', Auth::id())
+            ->where('upvote', false)
+            ->exists();
         return Inertia::render('Feature/Show', [
             'feature' => new FeatureResource($feature)
         ]);
